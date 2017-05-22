@@ -72,6 +72,7 @@ public class RemotingCommand {
         return decode(ByteBuffer.wrap(bytes));
     }
 
+    @JsonIgnore
     public ByteBuffer encodeHeader() {
         ByteBuffer headerBytes = ByteBuffer.allocate(COMMAND_HEADER_LENGTH);
         headerBytes.putInt(code);

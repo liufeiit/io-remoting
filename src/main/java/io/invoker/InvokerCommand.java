@@ -1,0 +1,92 @@
+package io.invoker;
+
+import java.io.Serializable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * @author 刘飞 E-mail:liufei_it@126.com
+ *
+ * @version 1.0.0
+ * @since 2017年5月22日 下午12:56:45
+ */
+public class InvokerCommand implements Serializable {
+    private static final long serialVersionUID = 7227421307748173734L;
+    private String id;
+    private String serviceGroup;
+    private String serviceId;
+    private String method;
+    private Class<?>[] signature;
+    private Object[] args;
+    private Object retObject;
+    private Throwable t;
+
+    @JsonIgnore
+    public String commandSignature() {
+        return serviceId + "." + method;
+    }
+    
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getServiceGroup() {
+        return serviceGroup;
+    }
+
+    public void setServiceGroup(String serviceGroup) {
+        this.serviceGroup = serviceGroup;
+    }
+
+    public String getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(String serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    public Class<?>[] getSignature() {
+        return signature;
+    }
+
+    public void setSignature(Class<?>[] signature) {
+        this.signature = signature;
+    }
+
+    public Object[] getArgs() {
+        return args;
+    }
+
+    public void setArgs(Object[] args) {
+        this.args = args;
+    }
+
+    public Object getRetObject() {
+        return retObject;
+    }
+
+    public void setRetObject(Object retObject) {
+        this.retObject = retObject;
+    }
+
+    public Throwable getT() {
+        return t;
+    }
+
+    public void setT(Throwable t) {
+        this.t = t;
+    }
+}

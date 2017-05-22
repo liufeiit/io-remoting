@@ -7,7 +7,6 @@ package io.remoting.netty;
  * @since 2017年5月19日 下午10:28:53
  */
 public class NettyServerConfigurator implements Cloneable {
-    
     private int listenPort = 8888;
     private int serverWorkerThreads = 8;
     private int serverSelectorThreads = 3;
@@ -15,7 +14,8 @@ public class NettyServerConfigurator implements Cloneable {
     private int serverSocketSndBufSize = Integer.getInteger("io.remoting.socket.sndbuf.size", 65535);
     private int serverSocketRcvBufSize = Integer.getInteger("io.remoting.socket.rcvbuf.size", 65535);
     private boolean serverPooledByteBufAllocatorEnable = true;
-
+    private int serverWorkerProcessorThreads = 8;
+    
     /**
      * make make install
      * ../glibc-2.10.1/configure \ --prefix=/usr \ --with-headers=/usr/include \
@@ -29,6 +29,14 @@ public class NettyServerConfigurator implements Cloneable {
 
     public void setListenPort(int listenPort) {
         this.listenPort = listenPort;
+    }
+
+    public int getServerWorkerProcessorThreads() {
+        return serverWorkerProcessorThreads;
+    }
+
+    public void setServerWorkerProcessorThreads(int serverWorkerProcessorThreads) {
+        this.serverWorkerProcessorThreads = serverWorkerProcessorThreads;
     }
 
     public int getServerWorkerThreads() {

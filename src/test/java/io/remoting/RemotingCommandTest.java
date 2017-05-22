@@ -1,9 +1,11 @@
 package io.remoting;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 import org.junit.Test;
 
+import io.invoker.InvokerCommand;
 import io.remoting.protocol.CommandCode;
 import io.remoting.protocol.CommandVersion;
 import io.remoting.protocol.JacksonSerializer;
@@ -30,6 +32,32 @@ public class RemotingCommandTest {
         System.err.println(byteBuffer.getInt());
         System.err.println(byteBuffer.getInt());
         System.err.println(byteBuffer.getInt());
+    }
+    
+    @Test
+    public void testInvokerCommand() throws Throwable {
+        JacksonSerializer serializer = new JacksonSerializer();
+        InvokerCommand invokerCommand = new InvokerCommand();
+        invokerCommand.setId(UUID.randomUUID().toString());
+        invokerCommand.setServiceGroup("test.srv.group");
+        invokerCommand.setServiceId("test.Service");
+        invokerCommand.setMethod("hello");
+        invokerCommand.setSignature(new Class<?>[]{String.class});
+        invokerCommand.setArgs(new Object[] {"刘飞"});
+        invokerCommand.setRetObject("你好刘飞");
+        invokerCommand.setT(new RuntimeException("test"));
+        RemotingCommand command = new RemotingCommand();
+        command.setOneway();
+        command.setReply();
+        command.setCode(CommandCode.REQUEST_CODE_NOT_SUPPORTED);
+        command.setVersion(CommandVersion.V1);
+        command.setBodyObject(invokerCommand);
+        byte[] serializeBytes = serializer.serializeAsBytes(command);
+        System.err.println("serializeBytes : " + serializeBytes.length);
+        RemotingCommand commandFromBytes = serializer.deserialize(RemotingCommand.class, serializeBytes);
+        InvokerCommand invokerCommandFromBytes = serializer.deserialize(InvokerCommand.class, commandFromBytes.getBody());
+        System.err.println("invokerCommandFromBytes : " + serializer.serializeAsString(invokerCommandFromBytes));
+        throw invokerCommandFromBytes.getT();
     }
 
     @Test
