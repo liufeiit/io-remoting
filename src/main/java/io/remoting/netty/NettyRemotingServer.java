@@ -29,6 +29,7 @@ import io.remoting.exception.RemotingSendRequestException;
 import io.remoting.exception.RemotingTimeoutException;
 import io.remoting.netty.codec.ProtocolDecoder;
 import io.remoting.netty.codec.ProtocolEncoder;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
 import io.remoting.utils.RemotingThreadFactory;
 import io.remoting.utils.RemotingUtils;
@@ -49,8 +50,8 @@ public class NettyRemotingServer extends NettyAbstractRemotingService implements
     private final NettyServerConfigurator nettyServerConfigurator;
     private final ExecutorService defaultThreadPoolExecutor;
 
-    public NettyRemotingServer(final NettyServerConfigurator nettyServerConfigurator) {
-        super();
+    public NettyRemotingServer(final ProtocolFactorySelector protocolFactorySelector, final NettyServerConfigurator nettyServerConfigurator) {
+        super(protocolFactorySelector);
         this.serverBootstrap = new ServerBootstrap();
         this.nettyServerConfigurator = nettyServerConfigurator;
         this.defaultThreadPoolExecutor = Executors.newFixedThreadPool(8, RemotingThreadFactory.newThreadFactory("NettyRemotingServerDefaultThreadPoolExecutor-%d", false));

@@ -20,7 +20,10 @@ import io.remoting.netty.NettyRemotingServer;
 import io.remoting.netty.NettyServerConfigurator;
 import io.remoting.protocol.CommandCode;
 import io.remoting.protocol.CommandVersion;
+import io.remoting.protocol.JacksonProtocolFactory;
 import io.remoting.protocol.JacksonSerializer;
+import io.remoting.protocol.ProtocolFactory;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
 
 public class RemotingServerTest {
@@ -29,14 +32,20 @@ public class RemotingServerTest {
 
     public static RemotingServer createRemotingServer() throws InterruptedException {
         NettyServerConfigurator config = new NettyServerConfigurator();
-        RemotingServer remotingServer = new NettyRemotingServer(config);
+        final ProtocolFactory protocolFactory = new JacksonProtocolFactory();
+        ProtocolFactorySelector protocolFactorySelector = new ProtocolFactorySelector() {
+            public ProtocolFactory select(int serializeCode) {
+                return protocolFactory;
+            }
+        };
+        RemotingServer remotingServer = new NettyRemotingServer(protocolFactorySelector, config);
         remotingServer.registerDefaultProcessor(new NettyCommandProcessor() {
             public RemotingCommand processCommand(ChannelHandlerContext ctx, RemotingCommand request) {
                 JacksonSerializer serializer = new JacksonSerializer();
                 SimpleBean simpleBean = serializer.deserialize(SimpleBean.class, request.getBody());
                 System.err.println("收到客户端请求 : " + serializer.deserialize(String.class, simpleBean.getAvt()));
                 simpleBean.setAvt(serializer.serializeAsBytes("来之服务器的问候" + simpleBean.getName() + ", " + simpleBean.getAge() + " 很好啊"));
-                request.setBodyObject(simpleBean);
+                protocolFactory.encode(simpleBean, request);
                 return request;
             }
             public boolean reject() {
@@ -53,7 +62,13 @@ public class RemotingServerTest {
 
     public static RemotingClient createRemotingClient() {
         NettyClientConfigurator config = new NettyClientConfigurator();
-        RemotingClient client = new NettyRemotingClient(config);
+        final ProtocolFactory protocolFactory = new JacksonProtocolFactory();
+        ProtocolFactorySelector protocolFactorySelector = new ProtocolFactorySelector() {
+            public ProtocolFactory select(int serializeCode) {
+                return protocolFactory;
+            }
+        };
+        RemotingClient client = new NettyRemotingClient(protocolFactorySelector, config);
         client.start();
         return client;
     }
@@ -73,6 +88,7 @@ public class RemotingServerTest {
     @Test
     public void testInvokeSync() throws InterruptedException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException {
         try {
+            ProtocolFactory protocolFactory = new JacksonProtocolFactory();
             JacksonSerializer serializer = new JacksonSerializer();
             RemotingCommand command = new RemotingCommand();
             command.setCode(CommandCode.SUCCESS);
@@ -81,7 +97,7 @@ public class RemotingServerTest {
             simpleBean.setName("刘飞");
             simpleBean.setAge(30);
             simpleBean.setAvt(serializer.serializeAsBytes("你好吗-sync"));
-            command.setBodyObject(simpleBean);
+            protocolFactory.encode(simpleBean, command);
             RemotingCommand response = remotingClient.invokeSync("localhost:8888", command, 1000 * 3);
             System.err.println("response : " + response);
             SimpleBean reply = serializer.deserialize(SimpleBean.class, response.getBody());
@@ -94,6 +110,7 @@ public class RemotingServerTest {
     @Test
     public void testInvokeAsync() throws InterruptedException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException {
         try {
+            final ProtocolFactory protocolFactory = new JacksonProtocolFactory();
             final JacksonSerializer serializer = new JacksonSerializer();
             RemotingCommand command = new RemotingCommand();
             command.setCode(CommandCode.SUCCESS);
@@ -102,7 +119,7 @@ public class RemotingServerTest {
             simpleBean.setName("刘飞");
             simpleBean.setAge(30);
             simpleBean.setAvt(serializer.serializeAsBytes("你好吗-async"));
-            command.setBodyObject(simpleBean);
+            protocolFactory.encode(simpleBean, command);
             final CountDownLatch wait = new CountDownLatch(1);
             remotingClient.invokeAsync("localhost:8888", command, 1000 * 3, new RemotingCallback() {
                 @Override
@@ -124,6 +141,7 @@ public class RemotingServerTest {
     @Test
     public void testInvokeOneway() throws InterruptedException, RemotingConnectException, RemotingTimeoutException, RemotingSendRequestException {
         try {
+            ProtocolFactory protocolFactory = new JacksonProtocolFactory();
             JacksonSerializer serializer = new JacksonSerializer();
             RemotingCommand command = new RemotingCommand();
             command.setCode(CommandCode.SUCCESS);
@@ -132,7 +150,7 @@ public class RemotingServerTest {
             simpleBean.setName("刘飞");
             simpleBean.setAge(30);
             simpleBean.setAvt(serializer.serializeAsBytes("你好吗-oneway"));
-            command.setBodyObject(simpleBean);
+            protocolFactory.encode(simpleBean, command);
             remotingClient.invokeOneway("localhost:8888", command);
             Thread.sleep(2000L);
         } catch (Exception e) {

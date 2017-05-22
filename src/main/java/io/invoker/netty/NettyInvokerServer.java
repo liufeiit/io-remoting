@@ -14,6 +14,7 @@ import io.invoker.port.ServerPort;
 import io.remoting.netty.NettyCommandProcessor;
 import io.remoting.netty.NettyRemotingServer;
 import io.remoting.netty.NettyServerConfigurator;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.utils.RemotingThreadFactory;
 import io.remoting.utils.RemotingUtils;
 
@@ -30,11 +31,12 @@ public class NettyInvokerServer implements InvokerServer {
     private LookupModule lookupModule;
     private ServerPort serverPort;
     private Address serverAddress;
+    private ProtocolFactorySelector protocolFactorySelector;
 
     @Override
     public void start() {
         serverConfigurator.setListenPort(serverPort.selectPort());
-        remotingServer = new NettyRemotingServer(serverConfigurator);
+        remotingServer = new NettyRemotingServer(protocolFactorySelector, serverConfigurator);
         remotingServer.registerDefaultProcessor(this.newCommandProcessor(),
                 Executors.newFixedThreadPool(serverConfigurator.getServerWorkerProcessorThreads(), RemotingThreadFactory.newThreadFactory("NettyInvokerServerWorkerProcessor-%d", false)));
         remotingServer.start();
@@ -84,5 +86,9 @@ public class NettyInvokerServer implements InvokerServer {
     
     public void setServerPort(ServerPort serverPort) {
         this.serverPort = serverPort;
+    }
+    
+    public void setProtocolFactorySelector(ProtocolFactorySelector protocolFactorySelector) {
+        this.protocolFactorySelector = protocolFactorySelector;
     }
 }

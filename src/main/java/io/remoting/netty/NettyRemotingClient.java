@@ -33,6 +33,7 @@ import io.remoting.exception.RemotingSendRequestException;
 import io.remoting.exception.RemotingTimeoutException;
 import io.remoting.netty.codec.ProtocolDecoder;
 import io.remoting.netty.codec.ProtocolEncoder;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
 import io.remoting.utils.RemotingThreadFactory;
 import io.remoting.utils.RemotingUtils;
@@ -53,8 +54,8 @@ public class NettyRemotingClient extends NettyAbstractRemotingService implements
     private final ExecutorService defaultThreadPoolExecutor;
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
-    public NettyRemotingClient(final NettyClientConfigurator nettyClientConfigurator) {
-        super();
+    public NettyRemotingClient(final ProtocolFactorySelector protocolFactorySelector, final NettyClientConfigurator nettyClientConfigurator) {
+        super(protocolFactorySelector);
         this.nettyClientConfigurator = nettyClientConfigurator;
         this.defaultThreadPoolExecutor = Executors.newFixedThreadPool(4, RemotingThreadFactory.newThreadFactory("NettyRemotingClientDefaultThreadPoolExecutor-%d", false));
         this.eventLoopGroupWorker = new NioEventLoopGroup(1, RemotingThreadFactory.newThreadFactory("NettyRemotingClientSelector-%d", false));

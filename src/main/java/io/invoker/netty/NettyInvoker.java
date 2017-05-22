@@ -19,8 +19,9 @@ import io.remoting.exception.RemotingTimeoutException;
 import io.remoting.netty.NettyClientConfigurator;
 import io.remoting.netty.NettyRemotingClient;
 import io.remoting.protocol.CommandVersion;
+import io.remoting.protocol.ProtocolFactory;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
-import io.remoting.protocol.SerializeType;
 
 /**
  * @author 刘飞 E-mail:liufei_it@126.com
@@ -35,29 +36,32 @@ public class NettyInvoker implements Invoker {
     private LookupModule lookupModule;
     private LoadBalance loadBalance;
     private int serializeCode;
+    private ProtocolFactorySelector protocolFactorySelector;
+    private ProtocolFactory protocolFactory;
 
     @Override
     public void start() {
-        remotingClient = new NettyRemotingClient(clientConfigurator);
+        remotingClient = new NettyRemotingClient(protocolFactorySelector, clientConfigurator);
         remotingClient.start();
         log.info("NettyInvoker 'NettyRemotingClient' start success.");
+        protocolFactory = protocolFactorySelector.select(serializeCode);
+        log.info("NettyInvoker 'ProtocolFactory' select by serializeCode {} success.", serializeCode);
     }
     
     @Override
     public InvokerCommand invokeSync(final InvokerCommand command, final long timeoutMillis) throws InvokerException, InvokerTimeoutException {
         try {
             long startMillis = System.currentTimeMillis();
-            SerializeType serializeType = SerializeType.valueOf(serializeCode);
             int commandCode = command.getServiceGroup().hashCode();
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
             request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeType.getSerializeCode());
-            request.setBodyObject(command);
+            request.setSerializeCode(serializeCode);
+            protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             RemotingCommand response = remotingClient.invokeSync(addr.toString(), request, timeoutMillis);
             if (commandCode == response.getCode()) {
-                InvokerCommand invokerCommand = serializeType.getSerializer().deserialize(InvokerCommand.class, response.getBody());
+                InvokerCommand invokerCommand = protocolFactory.decode(InvokerCommand.class, response);
                 long endMillis = System.currentTimeMillis();
                 log.info("invoker serviceId<{}>, used {}(ms) success.", new Object[] {command.commandSignature(), (endMillis - startMillis)});
                 return invokerCommand;
@@ -83,13 +87,12 @@ public class NettyInvoker implements Invoker {
     public void invokeAsync(final InvokerCommand command, final long timeoutMillis, final InvokerCallback callback) throws InvokerException, InvokerTimeoutException {
         try {
             final long startMillis = System.currentTimeMillis();
-            final SerializeType serializeType = SerializeType.valueOf(serializeCode);
             final int commandCode = command.getServiceGroup().hashCode();
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
             request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeType.getSerializeCode());
-            request.setBodyObject(command);
+            request.setSerializeCode(serializeCode);
+            protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             remotingClient.invokeAsync(addr.toString(), request, timeoutMillis, new RemotingCallback() {
                 @Override
@@ -100,7 +103,7 @@ public class NettyInvoker implements Invoker {
                     }
                     RemotingCommand response = replyFuture.getResponse();
                     if (commandCode == response.getCode()) {
-                        InvokerCommand invokerCommand = serializeType.getSerializer().deserialize(InvokerCommand.class, response.getBody());
+                        InvokerCommand invokerCommand = protocolFactory.decode(InvokerCommand.class, response);
                         long endMillis = System.currentTimeMillis();
                         log.info("invoker serviceId<{}>, used {}(ms) success.", new Object[] {command.commandSignature(), (endMillis - startMillis)});
                         callback.onComplete(invokerCommand);
@@ -128,13 +131,12 @@ public class NettyInvoker implements Invoker {
     public void invokeOneway(InvokerCommand command) throws InvokerException, InvokerTimeoutException {
         try {
             long startMillis = System.currentTimeMillis();
-            SerializeType serializeType = SerializeType.valueOf(serializeCode);
             int commandCode = command.getServiceGroup().hashCode();
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
             request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeType.getSerializeCode());
-            request.setBodyObject(command);
+            request.setSerializeCode(serializeCode);
+            protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             remotingClient.invokeOneway(addr.toString(), request);
             long endMillis = System.currentTimeMillis();
@@ -173,5 +175,9 @@ public class NettyInvoker implements Invoker {
     
     public void setSerializeCode(int serializeCode) {
         this.serializeCode = serializeCode;
+    }
+    
+    public void setProtocolFactorySelector(ProtocolFactorySelector protocolFactorySelector) {
+        this.protocolFactorySelector = protocolFactorySelector;
     }
 }

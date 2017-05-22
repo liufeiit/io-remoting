@@ -8,7 +8,9 @@ import org.junit.Test;
 import io.invoker.InvokerCommand;
 import io.remoting.protocol.CommandCode;
 import io.remoting.protocol.CommandVersion;
+import io.remoting.protocol.JacksonProtocolFactory;
 import io.remoting.protocol.JacksonSerializer;
+import io.remoting.protocol.ProtocolFactory;
 import io.remoting.protocol.RemotingCommand;
 
 /**
@@ -36,6 +38,7 @@ public class RemotingCommandTest {
     
     @Test
     public void testInvokerCommand() throws Throwable {
+        ProtocolFactory protocolFactory = new JacksonProtocolFactory();
         JacksonSerializer serializer = new JacksonSerializer();
         InvokerCommand invokerCommand = new InvokerCommand();
         invokerCommand.setId(UUID.randomUUID().toString());
@@ -51,7 +54,7 @@ public class RemotingCommandTest {
         command.setReply();
         command.setCode(CommandCode.REQUEST_CODE_NOT_SUPPORTED);
         command.setVersion(CommandVersion.V1);
-        command.setBodyObject(invokerCommand);
+        protocolFactory.encode(invokerCommand, command);
         byte[] serializeBytes = serializer.serializeAsBytes(command);
         System.err.println("serializeBytes : " + serializeBytes.length);
         RemotingCommand commandFromBytes = serializer.deserialize(RemotingCommand.class, serializeBytes);
@@ -62,6 +65,7 @@ public class RemotingCommandTest {
 
     @Test
     public void testRemotingCommand() throws Throwable {
+        ProtocolFactory protocolFactory = new JacksonProtocolFactory();
         JacksonSerializer serializer = new JacksonSerializer();
         RemotingCommand command = new RemotingCommand();
         System.err.println("1 isOneway " + command.isOneway());
@@ -76,8 +80,7 @@ public class RemotingCommandTest {
         simpleBean.setName("刘飞");
         simpleBean.setAge(30);
         simpleBean.setAvt(serializer.serializeAsBytes("你好吗"));
-        command.setBodyObject(simpleBean);
-        
+        protocolFactory.encode(simpleBean, command);
         
         System.err.println("2 isOneway " + command.isOneway());
         System.err.println("2 isReply " + command.isReply());

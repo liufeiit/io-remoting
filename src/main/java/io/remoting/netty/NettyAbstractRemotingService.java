@@ -27,6 +27,8 @@ import io.remoting.ReplyFuture;
 import io.remoting.exception.RemotingSendRequestException;
 import io.remoting.exception.RemotingTimeoutException;
 import io.remoting.protocol.CommandCode;
+import io.remoting.protocol.ProtocolFactory;
+import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
 import io.remoting.utils.RemotingThreadFactory;
 import io.remoting.utils.RemotingUtils;
@@ -42,11 +44,12 @@ public abstract class NettyAbstractRemotingService {
     protected final ConcurrentHashMap<Long, ReplyFuture> replies;
     protected final HashMap<Integer, Pair<NettyCommandProcessor, ExecutorService>> processors;
     protected Pair<NettyCommandProcessor, ExecutorService> defaultCommandProcessor;
-    
+    protected final ProtocolFactorySelector protocolFactorySelector;
     private final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
-    public NettyAbstractRemotingService() {
+    public NettyAbstractRemotingService(final ProtocolFactorySelector protocolFactorySelector) {
         super();
+        this.protocolFactorySelector = protocolFactorySelector;
         replies = new ConcurrentHashMap<Long, ReplyFuture>(256);
         processors = new HashMap<Integer, Pair<NettyCommandProcessor, ExecutorService>>(64);
         scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(2, RemotingThreadFactory.newThreadFactory("NettyRemotingReply-%d", false), new CallerRunsPolicy() {
@@ -99,15 +102,18 @@ public abstract class NettyAbstractRemotingService {
         final Pair<NettyCommandProcessor, ExecutorService> commandProcessor = this.processors.get(cmd.getCode());
         final Pair<NettyCommandProcessor, ExecutorService> pair = (null == commandProcessor) ? this.defaultCommandProcessor : commandProcessor;
         final long opaque = cmd.getOpaque();
+        final ProtocolFactory protocolFactory = protocolFactorySelector.select(cmd.getSerializeCode());
         if (pair == null) {
             String message = " command code " + cmd.getCode() + " not supported";
-            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.REQUEST_CODE_NOT_SUPPORTED, message);
+            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.REQUEST_CODE_NOT_SUPPORTED);
+            protocolFactory.encode(message, response);
             ctx.writeAndFlush(response);
             log.error(RemotingUtils.parseChannelRemoteAddr(ctx.channel()) + message);
             return;
         }
         if (pair.getKey().reject()) {
-            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_BUSY, "system busy, start flow control for a while");
+            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_BUSY);
+            protocolFactory.encode("system busy, start flow control for a while", response);
             ctx.writeAndFlush(response);
             return;
         }
@@ -130,7 +136,8 @@ public abstract class NettyAbstractRemotingService {
                 } catch (Throwable e) {
                     log.error("process command Error.", e);
                     if (!cmd.isOneway()) {
-                        final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_ERROR, RemotingUtils.exceptionToString(e));
+                        final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_ERROR);
+                        protocolFactory.encode(RemotingUtils.exceptionToString(e), response);
                         ctx.writeAndFlush(response);
                     }
                 }
@@ -142,7 +149,8 @@ public abstract class NettyAbstractRemotingService {
             log.warn(RemotingUtils.parseChannelRemoteAddr(ctx.channel()) + ", too many command and system thread pool busy, RejectedExecutionException " + pair.getValue().toString()
                     + " command code: " + cmd.getCode());
             if (!cmd.isOneway()) {
-                final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_BUSY, "system busy, start flow control for a while");
+                final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.SYSTEM_BUSY);
+                protocolFactory.encode("system busy, start flow control for a while", response);
                 ctx.writeAndFlush(response);
             }
         }

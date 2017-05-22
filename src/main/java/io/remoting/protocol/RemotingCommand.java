@@ -35,7 +35,7 @@ public class RemotingCommand {
 
     private transient byte[] body;
 
-    public static RemotingCommand replyCommand(RemotingCommand request, int code, Object message) {
+    public static RemotingCommand replyCommand(RemotingCommand request, int code) {
         RemotingCommand command = new RemotingCommand();
         command.setCode(code);
         command.setVersion(request.getVersion());
@@ -45,7 +45,6 @@ public class RemotingCommand {
         }
         command.setSerializeCode(request.getSerializeCode());
         command.setOpaque(request.getOpaque());
-        command.setBodyObject(message);
         return command;
     }
 
@@ -131,12 +130,6 @@ public class RemotingCommand {
 
     public void setBody(byte[] body) {
         this.body = body;
-    }
-
-    @JsonIgnore
-    public void setBodyObject(Object bean) {
-        Serializer serializer = SerializeType.valueOf(serializeCode).getSerializer();
-        this.setBody(serializer.serializeAsBytes(bean));
     }
 
     @JsonIgnore
