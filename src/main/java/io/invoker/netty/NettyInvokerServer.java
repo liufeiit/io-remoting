@@ -1,7 +1,9 @@
 package io.invoker.netty;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ public class NettyInvokerServer implements InvokerServer {
     private ProtocolFactorySelector protocolFactorySelector;
     private ServiceObjectFinder serviceObjectFinder;
     private FlowController flowController;
+    private List<String> serviceGroups;
 
     @Override
     public void start() {
@@ -47,6 +50,9 @@ public class NettyInvokerServer implements InvokerServer {
         remotingServer.start();
         serverAddress = new Address(RemotingUtils.getLocalAddress(), remotingServer.getServerAddress().getPort());
         log.info("NettyInvokerServer 'NettyRemotingServer' start success bind {}", serverAddress);
+        if (CollectionUtils.isNotEmpty(serviceGroups)) {
+            this.bind(serviceGroups.toArray(new String[serviceGroups.size()]));
+        }
     }
 
     @Override
@@ -107,5 +113,9 @@ public class NettyInvokerServer implements InvokerServer {
     
     public void setFlowController(FlowController flowController) {
         this.flowController = flowController;
+    }
+    
+    public void setServiceGroups(List<String> serviceGroups) {
+        this.serviceGroups = serviceGroups;
     }
 }
