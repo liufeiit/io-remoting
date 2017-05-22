@@ -59,23 +59,23 @@ public class NettyInvoker implements Invoker {
             if (commandCode == response.getCode()) {
                 InvokerCommand invokerCommand = protocolFactory.decode(InvokerCommand.class, response);
                 long endMillis = System.currentTimeMillis();
-                log.info("invoker serviceId<{}>, used {}(ms) success.", new Object[] {command.commandSignature(), (endMillis - startMillis)});
+                log.info("invoker correlationId<{}>, serviceId<{}>, used {}(ms) success.", new Object[] {command.getId(), command.commandSignature(), (endMillis - startMillis)});
                 return invokerCommand;
             }
-            log.error("invoker serviceId<{}>, code<{}> Error.", new Object[] {command.commandSignature(), response.getCode()});
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + ">, code<" + response.getCode() + "> Error.");
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<{}>, code<{}> Error.", new Object[] {command.commandSignature(), response.getCode()});
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + ">, code<" + response.getCode() + "> Error.");
         } catch (RemotingConnectException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (RemotingSendRequestException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (RemotingTimeoutException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
-            throw new InvokerTimeoutException("invoker serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
+            throw new InvokerTimeoutException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
         } catch (InterruptedException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -102,25 +102,25 @@ public class NettyInvoker implements Invoker {
                     if (commandCode == response.getCode()) {
                         InvokerCommand invokerCommand = protocolFactory.decode(InvokerCommand.class, response);
                         long endMillis = System.currentTimeMillis();
-                        log.info("invoker serviceId<{}>, used {}(ms) success.", new Object[] {command.commandSignature(), (endMillis - startMillis)});
+                        log.info("invoker correlationId<{}>, serviceId<{}>, used {}(ms) success.", new Object[] {command.getId(), command.commandSignature(), (endMillis - startMillis)});
                         callback.onComplete(invokerCommand);
                         return;
                     }
-                    callback.onError(new InvokerException("invoker serviceId<" + command.commandSignature() + ">, code<" + response.getCode() + "> Error."));
+                    callback.onError(new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + ">, code<" + response.getCode() + "> Error."));
                 }
             });
         } catch (RemotingConnectException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (RemotingSendRequestException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (RemotingTimeoutException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
-            throw new InvokerTimeoutException("invoker serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
+            throw new InvokerTimeoutException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> timeout " + e.getLocalizedMessage(), e);
         } catch (InterruptedException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -138,16 +138,16 @@ public class NettyInvoker implements Invoker {
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             remotingClient.invokeOneway(addr.toString(), request);
             long endMillis = System.currentTimeMillis();
-            log.info("invoker serviceId<{}>, used {}(ms) success.", new Object[] {command.commandSignature(), (endMillis - startMillis)});
+            log.info("invoker correlationId<{}>, serviceId<{}>, used {}(ms) success.", new Object[] {command.getId(), command.commandSignature(), (endMillis - startMillis)});
         } catch (RemotingConnectException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (RemotingSendRequestException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         } catch (InterruptedException e) {
-            log.error("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
-            throw new InvokerException("invoker serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            log.error("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
+            throw new InvokerException("invoker correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> " + e.getLocalizedMessage(), e);
         }
     }
 

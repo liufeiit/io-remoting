@@ -33,7 +33,7 @@ public class InvokerCommandProcessor implements NettyCommandProcessor {
             command.setRetObject(retObject);
         } catch (Throwable e) {
             command.setT(e);
-            log.error("invoke serviceId<" + command.commandSignature() + "> Error.", e);
+            log.error("invoke correlationId<" + command.getId() + ">, serviceId<" + command.commandSignature() + "> Error.", e);
         }
         RemotingCommand response = RemotingCommand.replyCommand(request, request.getCode());
         protocolFactory.encode(command, response);

@@ -14,5 +14,5 @@ public interface CommandCode {
 
     int SYSTEM_BUSY = 2;
 
-    int REQUEST_CODE_NOT_SUPPORTED = 3;
+    int COMMAND_CODE_NOT_SUPPORTED = 3;
 }

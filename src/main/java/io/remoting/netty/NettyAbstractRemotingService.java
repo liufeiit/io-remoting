@@ -105,7 +105,7 @@ public abstract class NettyAbstractRemotingService {
         final ProtocolFactory protocolFactory = protocolFactorySelector.select(cmd.getProtocolCode());
         if (pair == null) {
             String message = " command code " + cmd.getCode() + " not supported";
-            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.REQUEST_CODE_NOT_SUPPORTED);
+            final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.COMMAND_CODE_NOT_SUPPORTED);
             protocolFactory.encode(message, response);
             ctx.writeAndFlush(response);
             log.error(RemotingUtils.parseChannelRemoteAddr(ctx.channel()) + message);

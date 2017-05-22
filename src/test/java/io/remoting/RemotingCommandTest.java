@@ -52,7 +52,7 @@ public class RemotingCommandTest {
         RemotingCommand command = new RemotingCommand();
         command.setOneway();
         command.setReply();
-        command.setCode(CommandCode.REQUEST_CODE_NOT_SUPPORTED);
+        command.setCode(CommandCode.COMMAND_CODE_NOT_SUPPORTED);
         command.setVersion(CommandVersion.V1);
         protocolFactory.encode(invokerCommand, command);
         byte[] serializeBytes = serializer.serializeAsBytes(command);
@@ -72,7 +72,7 @@ public class RemotingCommandTest {
         System.err.println("1 isReply " + command.isReply());
         command.setOneway();
         command.setReply();
-        command.setCode(CommandCode.REQUEST_CODE_NOT_SUPPORTED);
+        command.setCode(CommandCode.COMMAND_CODE_NOT_SUPPORTED);
         command.setVersion(CommandVersion.V1);
 //        command.setBody("hello world!".getBytes("UTF-8"));
         
