@@ -11,7 +11,7 @@ public class InvokerTimeoutException extends RuntimeException {
     private static final long serialVersionUID = -8099650661198763093L;
 
     public InvokerTimeoutException(String serviceId) {
-        super("invoker serviceId<" + serviceId + "> timeout Error.");
+        this(serviceId, null);
     }
 
     public InvokerTimeoutException(String serviceId, Throwable cause) {

@@ -9,8 +9,11 @@ import org.slf4j.LoggerFactory;
 import io.invoker.Address;
 import io.invoker.InvokerServer;
 import io.invoker.exception.InvokerException;
+import io.invoker.flow.FlowController;
 import io.invoker.lookup.LookupModule;
 import io.invoker.port.ServerPort;
+import io.invoker.processor.InvokerCommandProcessor;
+import io.invoker.processor.ServiceObjectFinder;
 import io.remoting.netty.NettyCommandProcessor;
 import io.remoting.netty.NettyRemotingServer;
 import io.remoting.netty.NettyServerConfigurator;
@@ -32,6 +35,8 @@ public class NettyInvokerServer implements InvokerServer {
     private ServerPort serverPort;
     private Address serverAddress;
     private ProtocolFactorySelector protocolFactorySelector;
+    private ServiceObjectFinder serviceObjectFinder;
+    private FlowController flowController;
 
     @Override
     public void start() {
@@ -65,7 +70,11 @@ public class NettyInvokerServer implements InvokerServer {
     }
 
     protected NettyCommandProcessor newCommandProcessor() {
-        return null;
+        InvokerCommandProcessor processor = new InvokerCommandProcessor();
+        processor.setProtocolFactorySelector(protocolFactorySelector);
+        processor.setServiceObjectFinder(serviceObjectFinder);
+        processor.setFlowController(flowController);
+        return processor;
     }
 
     @Override
@@ -90,5 +99,13 @@ public class NettyInvokerServer implements InvokerServer {
     
     public void setProtocolFactorySelector(ProtocolFactorySelector protocolFactorySelector) {
         this.protocolFactorySelector = protocolFactorySelector;
+    }
+    
+    public void setServiceObjectFinder(ServiceObjectFinder serviceObjectFinder) {
+        this.serviceObjectFinder = serviceObjectFinder;
+    }
+    
+    public void setFlowController(FlowController flowController) {
+        this.flowController = flowController;
     }
 }

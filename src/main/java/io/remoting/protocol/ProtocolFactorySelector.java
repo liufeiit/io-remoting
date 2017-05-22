@@ -9,5 +9,5 @@ import io.remoting.protocol.ProtocolFactory;
  * @since 2017年5月22日 下午4:50:40
  */
 public interface ProtocolFactorySelector {
-    ProtocolFactory select(int serializeCode);
+    ProtocolFactory select(int protocolCode);
 }
