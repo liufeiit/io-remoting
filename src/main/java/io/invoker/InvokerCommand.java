@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.remoting.protocol.CommandVersion;
+
 /**
  * @author 刘飞 E-mail:liufei_it@126.com
  *
@@ -13,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class InvokerCommand implements Serializable {
     private static final long serialVersionUID = 7227421307748173734L;
     private String id;
+    private int version = CommandVersion.V1;
+    private int protocolCode = 0;
     private String serviceGroup;
     private String serviceId;
     private String method;
@@ -32,6 +36,22 @@ public class InvokerCommand implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public int getProtocolCode() {
+        return protocolCode;
+    }
+
+    public void setProtocolCode(int protocolCode) {
+        this.protocolCode = protocolCode;
     }
 
     public String getServiceGroup() {

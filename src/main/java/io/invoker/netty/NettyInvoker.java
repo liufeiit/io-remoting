@@ -18,7 +18,6 @@ import io.remoting.exception.RemotingSendRequestException;
 import io.remoting.exception.RemotingTimeoutException;
 import io.remoting.netty.NettyClientConfigurator;
 import io.remoting.netty.NettyRemotingClient;
-import io.remoting.protocol.CommandVersion;
 import io.remoting.protocol.ProtocolFactory;
 import io.remoting.protocol.ProtocolFactorySelector;
 import io.remoting.protocol.RemotingCommand;
@@ -35,17 +34,13 @@ public class NettyInvoker implements Invoker {
     private NettyRemotingClient remotingClient;
     private LookupModule lookupModule;
     private LoadBalance loadBalance;
-    private int serializeCode;
     private ProtocolFactorySelector protocolFactorySelector;
-    private ProtocolFactory protocolFactory;
 
     @Override
     public void start() {
         remotingClient = new NettyRemotingClient(protocolFactorySelector, clientConfigurator);
         remotingClient.start();
         log.info("NettyInvoker 'NettyRemotingClient' start success.");
-        protocolFactory = protocolFactorySelector.select(serializeCode);
-        log.info("NettyInvoker 'ProtocolFactory' select by serializeCode {} success.", serializeCode);
     }
     
     @Override
@@ -53,10 +48,11 @@ public class NettyInvoker implements Invoker {
         try {
             long startMillis = System.currentTimeMillis();
             int commandCode = command.getServiceGroup().hashCode();
+            ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
-            request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeCode);
+            request.setVersion(command.getVersion());
+            request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             RemotingCommand response = remotingClient.invokeSync(addr.toString(), request, timeoutMillis);
@@ -88,10 +84,11 @@ public class NettyInvoker implements Invoker {
         try {
             final long startMillis = System.currentTimeMillis();
             final int commandCode = command.getServiceGroup().hashCode();
+            final ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
-            request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeCode);
+            request.setVersion(command.getVersion());
+            request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             remotingClient.invokeAsync(addr.toString(), request, timeoutMillis, new RemotingCallback() {
@@ -132,10 +129,11 @@ public class NettyInvoker implements Invoker {
         try {
             long startMillis = System.currentTimeMillis();
             int commandCode = command.getServiceGroup().hashCode();
+            ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
             request.setCode(commandCode);
-            request.setVersion(CommandVersion.V1);
-            request.setSerializeCode(serializeCode);
+            request.setVersion(command.getVersion());
+            request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
             Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
             remotingClient.invokeOneway(addr.toString(), request);
@@ -171,10 +169,6 @@ public class NettyInvoker implements Invoker {
     
     public void setLoadBalance(LoadBalance loadBalance) {
         this.loadBalance = loadBalance;
-    }
-    
-    public void setSerializeCode(int serializeCode) {
-        this.serializeCode = serializeCode;
     }
     
     public void setProtocolFactorySelector(ProtocolFactorySelector protocolFactorySelector) {

@@ -30,7 +30,7 @@ public class RemotingCommand {
     private int code = 0;
     private int version = CommandVersion.V1;
     private int command = 0;
-    private int serializeCode = 0;
+    private int protocolCode = 0;
     private long opaque = REQ_ID.getAndIncrement();
 
     private transient byte[] body;
@@ -43,7 +43,7 @@ public class RemotingCommand {
         if (request.isOneway()) {
             command.setOneway();
         }
-        command.setSerializeCode(request.getSerializeCode());
+        command.setProtocolCode(request.getProtocolCode());
         command.setOpaque(request.getOpaque());
         return command;
     }
@@ -52,14 +52,14 @@ public class RemotingCommand {
         int code = byteBuffer.getInt();
         int version = byteBuffer.getInt();
         int command = byteBuffer.getInt();
-        int serializeCode = byteBuffer.getInt();
+        int protocolCode = byteBuffer.getInt();
         long opaque = byteBuffer.getLong();
         int bodyLength = byteBuffer.getInt();
         RemotingCommand remotingCommand = new RemotingCommand();
         remotingCommand.setCode(code);
         remotingCommand.setVersion(version);
         remotingCommand.setCommand(command);
-        remotingCommand.setSerializeCode(serializeCode);
+        remotingCommand.setProtocolCode(protocolCode);
         remotingCommand.setOpaque(opaque);
         byte[] body = new byte[bodyLength];
         byteBuffer.get(body);
@@ -77,7 +77,7 @@ public class RemotingCommand {
         headerBytes.putInt(code);
         headerBytes.putInt(version);
         headerBytes.putInt(command);
-        headerBytes.putInt(serializeCode);
+        headerBytes.putInt(protocolCode);
         headerBytes.putLong(opaque);
         headerBytes.putInt(body.length);
         headerBytes.flip();
@@ -108,12 +108,12 @@ public class RemotingCommand {
         this.command = command;
     }
 
-    public int getSerializeCode() {
-        return serializeCode;
+    public int getProtocolCode() {
+        return protocolCode;
     }
 
-    public void setSerializeCode(int serializeCode) {
-        this.serializeCode = serializeCode;
+    public void setProtocolCode(int protocolCode) {
+        this.protocolCode = protocolCode;
     }
 
     public long getOpaque() {
@@ -158,6 +158,6 @@ public class RemotingCommand {
 
     @Override
     public String toString() {
-        return "RemotingCommand [code=" + code + ", version=" + version + ", command=" + command + ", serializeCode=" + serializeCode + ", opaque=" + opaque + "]";
+        return "RemotingCommand [code=" + code + ", version=" + version + ", command=" + command + ", protocolCode=" + protocolCode + ", opaque=" + opaque + "]";
     }
 }

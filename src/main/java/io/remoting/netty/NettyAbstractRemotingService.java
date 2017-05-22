@@ -102,7 +102,7 @@ public abstract class NettyAbstractRemotingService {
         final Pair<NettyCommandProcessor, ExecutorService> commandProcessor = this.processors.get(cmd.getCode());
         final Pair<NettyCommandProcessor, ExecutorService> pair = (null == commandProcessor) ? this.defaultCommandProcessor : commandProcessor;
         final long opaque = cmd.getOpaque();
-        final ProtocolFactory protocolFactory = protocolFactorySelector.select(cmd.getSerializeCode());
+        final ProtocolFactory protocolFactory = protocolFactorySelector.select(cmd.getProtocolCode());
         if (pair == null) {
             String message = " command code " + cmd.getCode() + " not supported";
             final RemotingCommand response = RemotingCommand.replyCommand(cmd, CommandCode.REQUEST_CODE_NOT_SUPPORTED);
