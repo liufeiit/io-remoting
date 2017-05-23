@@ -9,7 +9,7 @@ import io.invoker.exception.InvokerException;
  * @since 2017年5月22日 下午12:56:14
  */
 public interface InvokerServer {
-    void deploy(String serviceGroup, String serviceId, Object bean) throws InvokerException;
+    void deploy(String serviceGroup, String serviceId, int version, int protocol, Object bean) throws InvokerException;
     void bind(String... serviceGroups);
     void start();
     void shutdown();

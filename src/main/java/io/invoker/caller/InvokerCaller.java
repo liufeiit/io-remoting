@@ -1,13 +1,14 @@
 package io.invoker.caller;
 
 import java.lang.reflect.InvocationHandler;
-
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.invoker.InvokeType;
 import io.invoker.Invoker;
 import io.invoker.InvokerCallback;
 import io.invoker.InvokerCommand;
+import io.invoker.RemoteObject;
 import io.invoker.annotation.Method;
 import io.invoker.annotation.Service;
 import io.invoker.utils.CorrelationIds;
@@ -21,52 +22,66 @@ import io.invoker.utils.CorrelationIds;
 public class InvokerCaller implements InvocationHandler {
     private final Class<?> serviceInterface;
     private final Invoker invoker;
+    private final RemoteStub remoteObject;
 
     public InvokerCaller(Invoker invoker, Class<?> serviceInterface) {
         super();
         this.invoker = invoker;
         this.serviceInterface = serviceInterface;
+        Service service = this.serviceInterface.getAnnotation(Service.class);
+        this.remoteObject = new RemoteStub();
+        remoteObject.setServiceId(this.serviceInterface.getName());
+        remoteObject.setServiceGroup(service.group());
+        remoteObject.setVersion(service.version());
+        remoteObject.setProtocolCode(service.protocol());
     }
 
     @Override
     public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
-        Service service = this.serviceInterface.getAnnotation(Service.class);
+        if (method.getDeclaringClass().equals(RemoteObject.class)) {
+            return method.invoke(remoteObject, args);
+        }
+        if (method.getDeclaringClass().equals(Object.class)) {
+            return method.invoke(this, args);
+        }
         Method serviceMethod = method.getAnnotation(Method.class);
-        String group = service.group();
         long timeoutMillis = serviceMethod.timeoutMillis();
         InvokeType type = serviceMethod.type();
         InvokerCommand command = new InvokerCommand();
         command.setId(CorrelationIds.buildGuid());
-        command.setVersion(serviceMethod.version());
-        command.setProtocolCode(serviceMethod.protocol());
-        command.setServiceGroup(group);
+        command.setVersion(remoteObject.getVersion());
+        command.setProtocolCode(remoteObject.getProtocolCode());
+        command.setServiceGroup(remoteObject.getServiceGroup());
         command.setServiceId(this.serviceInterface.getName());
         command.setMethod(method.getName());
         command.setSignature(method.getParameterTypes());
         command.setArgs(args);
         switch (type) {
             case SYNC:
-                InvokerCommand response = this.invoker.invokeSync(command, timeoutMillis);
-                if (response.getT() != null) {
-                    throw response.getT();
+                InvokerCommand syncResponse = this.invoker.invokeSync(command, timeoutMillis);
+                if (syncResponse.getT() != null) {
+                    throw syncResponse.getT();
                 }
-                return response.getRetObject();
+                return syncResponse.getRetObject();
             case ASYNC:
-                final Callback callback = getCallbackObject(args);
+                final InvokerCommandFuture invokerCommandFuture = new InvokerCommandFuture();
                 this.invoker.invokeAsync(command, timeoutMillis, new InvokerCallback() {
                     public void onError(Throwable e) {
-                        if (callback != null) {
-                            callback.onError(e);
-                        }
+                        invokerCommandFuture.setT(e);
                     }
 
                     public void onComplete(InvokerCommand command) {
-                        if (callback != null) {
-                            callback.onComplete(command.getRetObject());
-                        }
+                        invokerCommandFuture.setCommand(command);
                     }
                 });
-                break;
+                InvokerCommand asyncResponse = invokerCommandFuture.waitFor(timeoutMillis);
+                if (asyncResponse == null) {
+                    if (invokerCommandFuture.getT() != null) {
+                        throw invokerCommandFuture.getT();
+                    }
+                    return null;
+                }
+                return asyncResponse.getRetObject();
             case ONEWAY:
                 this.invoker.invokeOneway(command);
                 break;
@@ -74,15 +89,28 @@ public class InvokerCaller implements InvocationHandler {
         return null;
     }
 
-    private Callback getCallbackObject(Object[] args) {
-        if (ArrayUtils.isEmpty(args)) {
-            return null;
+    private class InvokerCommandFuture {
+        private InvokerCommand command;
+        private Throwable t;
+        private CountDownLatch sync = new CountDownLatch(1);
+
+        public InvokerCommand waitFor(long timeoutMillis) throws InterruptedException {
+            sync.await(timeoutMillis, TimeUnit.MILLISECONDS);
+            return command;
         }
-        for (Object arg : args) {
-            if (arg instanceof Callback) {
-                return (Callback) arg;
-            }
+
+        public void setCommand(InvokerCommand command) {
+            this.command = command;
+            sync.countDown();
         }
-        return null;
+
+        public void setT(Throwable t) {
+            this.t = t;
+            sync.countDown();
+        }
+
+        public Throwable getT() {
+            return t;
+        }
     }
 }

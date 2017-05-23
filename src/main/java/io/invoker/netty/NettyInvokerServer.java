@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.invoker.Address;
+import io.invoker.Application;
 import io.invoker.InvokerServer;
 import io.invoker.exception.InvokerException;
 import io.invoker.flow.FlowController;
@@ -16,6 +17,7 @@ import io.invoker.lookup.LookupModule;
 import io.invoker.port.ServerPort;
 import io.invoker.processor.InvokerCommandProcessor;
 import io.invoker.processor.ServiceObjectFinder;
+import io.invoker.track.TrackModule;
 import io.remoting.netty.NettyCommandProcessor;
 import io.remoting.netty.NettyRemotingServer;
 import io.remoting.netty.NettyServerConfigurator;
@@ -40,6 +42,8 @@ public class NettyInvokerServer implements InvokerServer {
     private ServiceObjectFinder serviceObjectFinder;
     private FlowController flowController;
     private List<String> serviceGroups;
+    private Application application;
+    private TrackModule trackModule;
 
     @Override
     public void start() {
@@ -70,9 +74,9 @@ public class NettyInvokerServer implements InvokerServer {
     }
 
     @Override
-    public void deploy(String serviceGroup, String serviceId, Object bean) throws InvokerException {
+    public void deploy(String serviceGroup, String serviceId, int version, int protocol, Object bean) throws InvokerException {
         log.info("deploy service serviceGroup : {}, serviceId : {}", new Object[] {serviceGroup, serviceId});
-        lookupModule.registry(serviceGroup, serviceId, serverAddress);
+        lookupModule.registry(serviceGroup, serviceId, version, protocol, serverAddress);
     }
 
     protected NettyCommandProcessor newCommandProcessor() {
@@ -80,6 +84,8 @@ public class NettyInvokerServer implements InvokerServer {
         processor.setProtocolFactorySelector(protocolFactorySelector);
         processor.setServiceObjectFinder(serviceObjectFinder);
         processor.setFlowController(flowController);
+        processor.setApplication(application);
+        processor.setTrackModule(trackModule);
         return processor;
     }
 
@@ -117,5 +123,13 @@ public class NettyInvokerServer implements InvokerServer {
     
     public void setServiceGroups(List<String> serviceGroups) {
         this.serviceGroups = serviceGroups;
+    }
+    
+    public void setApplication(Application application) {
+        this.application = application;
+    }
+    
+    public void setTrackModule(TrackModule trackModule) {
+        this.trackModule = trackModule;
     }
 }

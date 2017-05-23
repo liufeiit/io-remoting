@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import io.remoting.protocol.CommandVersion;
+
 /**
  * @author 刘飞 E-mail:liufei_it@126.com
  *
@@ -15,4 +17,6 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE })
 public @interface Service {
     public String group();
+    public int version() default CommandVersion.V1;
+    public int protocol() default 0;
 }

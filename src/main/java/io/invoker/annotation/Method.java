@@ -6,7 +6,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import io.invoker.InvokeType;
-import io.remoting.protocol.CommandVersion;
 
 /**
  * @author 刘飞 E-mail:liufei_it@126.com
@@ -19,6 +18,4 @@ import io.remoting.protocol.CommandVersion;
 public @interface Method {
     public long timeoutMillis() default 3000L;
     public InvokeType type() default InvokeType.SYNC;
-    public int version() default CommandVersion.V1;
-    public int protocol() default 0;
 }

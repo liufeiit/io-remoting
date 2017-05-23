@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.invoker.Address;
+import io.invoker.Application;
 import io.invoker.Invoker;
 import io.invoker.InvokerCallback;
 import io.invoker.InvokerCommand;
@@ -35,6 +36,7 @@ public class NettyInvoker implements Invoker {
     private LookupModule lookupModule;
     private LoadBalance loadBalance;
     private ProtocolFactorySelector protocolFactorySelector;
+    private Application application;
 
     @Override
     public void start() {
@@ -47,6 +49,7 @@ public class NettyInvoker implements Invoker {
     public InvokerCommand invokeSync(final InvokerCommand command, final long timeoutMillis) throws InvokerException, InvokerTimeoutException {
         try {
             long startMillis = System.currentTimeMillis();
+            command.setApplication(application);
             int commandCode = command.getServiceGroup().hashCode();
             ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
@@ -54,7 +57,7 @@ public class NettyInvoker implements Invoker {
             request.setVersion(command.getVersion());
             request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
-            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
+            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), command.getVersion(), command.getProtocolCode(), loadBalance);
             RemotingCommand response = remotingClient.invokeSync(addr.toString(), request, timeoutMillis);
             if (commandCode == response.getCode()) {
                 InvokerCommand invokerCommand = protocolFactory.decode(InvokerCommand.class, response);
@@ -83,6 +86,7 @@ public class NettyInvoker implements Invoker {
     public void invokeAsync(final InvokerCommand command, final long timeoutMillis, final InvokerCallback callback) throws InvokerException, InvokerTimeoutException {
         try {
             final long startMillis = System.currentTimeMillis();
+            command.setApplication(application);
             final int commandCode = command.getServiceGroup().hashCode();
             final ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
@@ -90,7 +94,7 @@ public class NettyInvoker implements Invoker {
             request.setVersion(command.getVersion());
             request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
-            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
+            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), command.getVersion(), command.getProtocolCode(), loadBalance);
             remotingClient.invokeAsync(addr.toString(), request, timeoutMillis, new RemotingCallback() {
                 @Override
                 public void onComplete(ReplyFuture replyFuture) {
@@ -128,6 +132,7 @@ public class NettyInvoker implements Invoker {
     public void invokeOneway(InvokerCommand command) throws InvokerException, InvokerTimeoutException {
         try {
             long startMillis = System.currentTimeMillis();
+            command.setApplication(application);
             int commandCode = command.getServiceGroup().hashCode();
             ProtocolFactory protocolFactory = protocolFactorySelector.select(command.getProtocolCode());
             RemotingCommand request = new RemotingCommand();
@@ -135,7 +140,7 @@ public class NettyInvoker implements Invoker {
             request.setVersion(command.getVersion());
             request.setProtocolCode(command.getProtocolCode());
             protocolFactory.encode(command, request);
-            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), loadBalance);
+            Address addr = lookupModule.lookup(command.getServiceGroup(), command.getServiceId(), command.getVersion(), command.getProtocolCode(), loadBalance);
             remotingClient.invokeOneway(addr.toString(), request);
             long endMillis = System.currentTimeMillis();
             log.info("invoker correlationId<{}>, serviceId<{}>, used {}(ms) success.", new Object[] {command.getId(), command.commandSignature(), (endMillis - startMillis)});
@@ -173,5 +178,9 @@ public class NettyInvoker implements Invoker {
     
     public void setProtocolFactorySelector(ProtocolFactorySelector protocolFactorySelector) {
         this.protocolFactorySelector = protocolFactorySelector;
+    }
+    
+    public void setApplication(Application application) {
+        this.application = application;
     }
 }

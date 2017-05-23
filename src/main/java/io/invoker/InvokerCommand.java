@@ -15,6 +15,7 @@ import io.remoting.protocol.CommandVersion;
 public class InvokerCommand implements Serializable {
     private static final long serialVersionUID = 7227421307748173734L;
     private String id;
+    private Application application;
     private int version = CommandVersion.V1;
     private int protocolCode = 0;
     private String serviceGroup;
@@ -36,6 +37,14 @@ public class InvokerCommand implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Application getApplication() {
+        return application;
+    }
+
+    public void setApplication(Application application) {
+        this.application = application;
     }
 
     public int getVersion() {

@@ -11,6 +11,6 @@ import io.invoker.cluster.LoadBalance;
  * @since 2017年5月22日 下午2:22:17
  */
 public interface LookupModule extends Module {
-    void registry(String serviceGroup, String serviceId, Address addr);
-    Address lookup(String serviceGroup, String serviceId, LoadBalance loadBalance);
+    void registry(String serviceGroup, String serviceId, int version, int protocol, Address addr);
+    Address lookup(String serviceGroup, String serviceId, int version, int protocol, LoadBalance loadBalance);
 }
