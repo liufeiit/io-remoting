@@ -11,8 +11,8 @@ public class NettyServerConfigurator implements Cloneable {
     private int serverWorkerThreads = 8;
     private int serverSelectorThreads = 3;
     private int serverChannelMaxIdleTimeSeconds = 120;
-    private int serverSocketSndBufSize = Integer.getInteger("io.remoting.socket.sndbuf.size", 65535);
-    private int serverSocketRcvBufSize = Integer.getInteger("io.remoting.socket.rcvbuf.size", 65535);
+    private int serverSocketSndBufSize = Integer.getInteger(NettySystemConfigurator.IO_REMOTING_SOCKET_SNDBUF_SIZE, 65535);
+    private int serverSocketRcvBufSize = Integer.getInteger(NettySystemConfigurator.IO_REMOTING_SOCKET_RCVBUF_SIZE, 65535);
     private boolean serverPooledByteBufAllocatorEnable = true;
     private int serverWorkerProcessorThreads = 8;
     

@@ -10,8 +10,8 @@ public class NettyClientConfigurator {
     private int clientWorkerThreads = 4;
     private int connectTimeoutMillis = 3000;
     private int clientChannelMaxIdleTimeSeconds = 120;
-    private int clientSocketSndBufSize = Integer.getInteger("io.remoting.socket.sndbuf.size", 65535);
-    private int clientSocketRcvBufSize = Integer.getInteger("io.remoting.socket.rcvbuf.size", 65535);
+    private int clientSocketSndBufSize = Integer.getInteger(NettySystemConfigurator.IO_REMOTING_SOCKET_SNDBUF_SIZE, 65535);
+    private int clientSocketRcvBufSize = Integer.getInteger(NettySystemConfigurator.IO_REMOTING_SOCKET_RCVBUF_SIZE, 65535);
 
     public int getClientWorkerThreads() {
         return clientWorkerThreads;

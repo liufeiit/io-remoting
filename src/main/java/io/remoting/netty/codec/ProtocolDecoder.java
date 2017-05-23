@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.remoting.netty.NettySystemConfigurator;
 import io.remoting.protocol.RemotingCommand;
 import io.remoting.utils.RemotingUtils;
 
@@ -16,10 +17,8 @@ import io.remoting.utils.RemotingUtils;
  * @since 2017年5月18日 上午11:57:41
  */
 public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
-
     private static final Logger log = LoggerFactory.getLogger(ProtocolDecoder.class.getSimpleName());
-
-    private static final int FRAME_MAX_LENGTH = Integer.getInteger("io.remoting.frame.maxlength", (Integer.MAX_VALUE - RemotingCommand.COMMAND_HEADER_LENGTH));
+    private static final int FRAME_MAX_LENGTH = Integer.getInteger(NettySystemConfigurator.IO_REMOTING_FRAME_MAXLENGTH, (Integer.MAX_VALUE - RemotingCommand.COMMAND_HEADER_LENGTH));
 
     public ProtocolDecoder() {
         super(FRAME_MAX_LENGTH, (RemotingCommand.COMMAND_HEADER_LENGTH - RemotingCommand.HEADER_BODY_LENGTH), RemotingCommand.HEADER_BODY_LENGTH, 0, 0);
