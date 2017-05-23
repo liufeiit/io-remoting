@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import io.invoker.RemoteObject;
+import io.invoker.annotation.Service;
 import io.remoting.protocol.CommandVersion;
 
 /**
@@ -22,6 +23,30 @@ public class RemoteStub implements RemoteObject {
     private int version = CommandVersion.V1;
     private int protocolCode = 0;
 
+    public RemoteStub() {
+        super();
+    }
+
+    public RemoteStub(String serializeStub) {
+        super();
+        this.deserializeStub(serializeStub);
+    }
+
+    public RemoteStub(Class<?> serviceInterface) {
+        super();
+        if (serviceInterface.isInterface() == false) {
+            throw new RuntimeException(serviceInterface.getName() + " is not interface.");
+        }
+        if (serviceInterface.isAnnotationPresent(Service.class) == false) {
+            throw new RuntimeException(serviceInterface.getName() + " is not Annotation by Service.");
+        }
+        Service service = serviceInterface.getAnnotation(Service.class);
+        this.serviceId = serviceInterface.getName();
+        this.serviceGroup = service.group();
+        this.version = service.version();
+        this.protocolCode = service.protocol();
+    }
+
     @Override
     public String serializeStub() {
         StringBuffer sb = new StringBuffer();
@@ -32,7 +57,7 @@ public class RemoteStub implements RemoteObject {
         return sb.toString();
     }
 
-    public RemoteStub deserializeStub(String serializeStub) {
+    public void deserializeStub(String serializeStub) {
         Matcher matcher = REMOTE_STUB_PATTERN.matcher(serializeStub);
         boolean matchFound = matcher.find();
         if (matchFound) {
@@ -40,7 +65,6 @@ public class RemoteStub implements RemoteObject {
             this.serviceGroup = StringUtils.defaultString(matcher.group(2), null);
             this.version = NumberUtils.toInt(matcher.group(3), CommandVersion.V1);
             this.protocolCode = NumberUtils.toInt(matcher.group(4), 0);
-            return this;
         }
         throw new RuntimeException("Illegal serialize data for RemoteObject.");
     }

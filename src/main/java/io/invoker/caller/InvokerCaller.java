@@ -10,7 +10,6 @@ import io.invoker.InvokerCallback;
 import io.invoker.InvokerCommand;
 import io.invoker.RemoteObject;
 import io.invoker.annotation.Method;
-import io.invoker.annotation.Service;
 import io.invoker.utils.CorrelationIds;
 
 /**
@@ -20,26 +19,52 @@ import io.invoker.utils.CorrelationIds;
  * @since 2017年5月22日 下午9:12:40
  */
 public class InvokerCaller implements InvocationHandler {
-    private final Class<?> serviceInterface;
     private final Invoker invoker;
     private final RemoteStub remoteObject;
+    
+    private class InvokerCommandFuture {
+        private InvokerCommand command;
+        private Throwable t;
+        private CountDownLatch sync = new CountDownLatch(1);
 
-    public InvokerCaller(Invoker invoker, Class<?> serviceInterface) {
+        public InvokerCommand waitFor(long timeoutMillis) throws InterruptedException {
+            sync.await(timeoutMillis, TimeUnit.MILLISECONDS);
+            return command;
+        }
+
+        public void setCommand(InvokerCommand command) {
+            this.command = command;
+            sync.countDown();
+        }
+
+        public void setT(Throwable t) {
+            this.t = t;
+            sync.countDown();
+        }
+
+        public Throwable getT() {
+            return t;
+        }
+    }
+    
+    public InvokerCaller(Invoker invoker, RemoteStub remoteObject) {
         super();
         this.invoker = invoker;
-        this.serviceInterface = serviceInterface;
-        Service service = this.serviceInterface.getAnnotation(Service.class);
-        this.remoteObject = new RemoteStub();
-        remoteObject.setServiceId(this.serviceInterface.getName());
-        remoteObject.setServiceGroup(service.group());
-        remoteObject.setVersion(service.version());
-        remoteObject.setProtocolCode(service.protocol());
+        this.remoteObject = remoteObject;
+    }
+    
+    public InvokerCaller(Invoker invoker, String serializeStub) {
+        this(invoker, new RemoteStub(serializeStub));
+    }
+
+    public InvokerCaller(Invoker invoker, Class<?> serviceInterface) {
+        this(invoker, new RemoteStub(serviceInterface));
     }
 
     @Override
     public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
         if (method.getDeclaringClass().equals(RemoteObject.class)) {
-            return method.invoke(remoteObject, args);
+            return method.invoke(this.remoteObject, args);
         }
         if (method.getDeclaringClass().equals(Object.class)) {
             return method.invoke(this, args);
@@ -49,10 +74,10 @@ public class InvokerCaller implements InvocationHandler {
         InvokeType type = serviceMethod.type();
         InvokerCommand command = new InvokerCommand();
         command.setId(CorrelationIds.buildGuid());
-        command.setVersion(remoteObject.getVersion());
-        command.setProtocolCode(remoteObject.getProtocolCode());
-        command.setServiceGroup(remoteObject.getServiceGroup());
-        command.setServiceId(this.serviceInterface.getName());
+        command.setVersion(this.remoteObject.getVersion());
+        command.setProtocolCode(this.remoteObject.getProtocolCode());
+        command.setServiceGroup(this.remoteObject.getServiceGroup());
+        command.setServiceId(this.remoteObject.getServiceId());
         command.setMethod(method.getName());
         command.setSignature(method.getParameterTypes());
         command.setArgs(args);
@@ -88,29 +113,8 @@ public class InvokerCaller implements InvocationHandler {
         }
         return null;
     }
-
-    private class InvokerCommandFuture {
-        private InvokerCommand command;
-        private Throwable t;
-        private CountDownLatch sync = new CountDownLatch(1);
-
-        public InvokerCommand waitFor(long timeoutMillis) throws InterruptedException {
-            sync.await(timeoutMillis, TimeUnit.MILLISECONDS);
-            return command;
-        }
-
-        public void setCommand(InvokerCommand command) {
-            this.command = command;
-            sync.countDown();
-        }
-
-        public void setT(Throwable t) {
-            this.t = t;
-            sync.countDown();
-        }
-
-        public Throwable getT() {
-            return t;
-        }
+    
+    public RemoteStub getRemoteObject() {
+        return remoteObject;
     }
 }
